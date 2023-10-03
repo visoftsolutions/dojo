@@ -64,13 +64,13 @@ fn scan(
             clause.key.serialize(ref serialized);
             let index = poseidon_hash_span(serialized.span());
 
-            let all_ids = index::get_by_key(0, index, clause.value);
-            (all_ids.span(), get_by_ids(class_hash, index, all_ids.span(), values_length, values_layout))
+            let all_ids = values_index::get(0, index, clause.value);
+            (all_ids, get_by_ids(class_hash, index, all_ids, values_length, values_layout))
         },
 
         // If no `where` clause is defined, we return all values.
         Option::None(_) => {
-            let all_ids = index::query(0, model, Option::None);
+            let all_ids = index::get(0, model);
             (all_ids, get_by_ids(class_hash, model, all_ids, values_length, values_layout))
         }
     }
