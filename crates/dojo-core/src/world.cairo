@@ -25,7 +25,13 @@ trait IWorld<T> {
         layout: Span<u8>
     );
     fn entities(
-        self: @T, model: felt252, index: Option<felt252>, values: Span<felt252>, values_length: usize, values_layout: Span<u8>
+        self: @T,
+        model: felt252,
+        index: Option<felt252>,
+        query_key: Option<felt252>,
+        query_values: Span<felt252>,
+        values_length: usize,
+        values_layout: Span<u8>
     ) -> (Span<felt252>, Span<Span<felt252>>);
     fn set_executor(ref self: T, contract_address: ContractAddress);
     fn executor(self: @T) -> ContractAddress;
@@ -379,12 +385,26 @@ mod world {
         /// * `Span<felt252>` - The entity IDs.
         /// * `Span<Span<felt252>>` - The entities.
         fn entities(
-            self: @ContractState, model: felt252, index: Option<felt252>, values: Span<felt252>, values_length: usize, values_layout: Span<u8>
+            self: @ContractState, model: felt252, index: Option<felt252>, query_key: Option<felt252>,  query_values: Span<felt252>, values_length: usize, values_layout: Span<u8>
         ) -> (Span<felt252>, Span<Span<felt252>>) {
             let class_hash = self.models.read(model);
+            let where_clause = match query_key {
+                Option::Some(query_key) => {
+                    let value = if query_values.len() == 1 {
+                        *query_values.at(0)
+                    } else {
+                        poseidon::poseidon_hash_span(query_values)
+                    };
 
-            assert(values.len() == 0, 'Queries by values not impl');
-            database::scan(class_hash, model, Option::None(()), values_length, values_layout)
+                    Option::Some(WhereCondition {
+                        key: query_key,
+                        value
+                    })
+                },
+                Option::None => Option::None,
+            };
+
+            database::scan(class_hash, model, where_clause, values_length, values_layout)
         }
 
         /// Sets the executor contract address.
