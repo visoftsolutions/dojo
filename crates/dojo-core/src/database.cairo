@@ -5,11 +5,8 @@ use hash::LegacyHash;
 use poseidon::poseidon_hash_span;
 
 mod index;
-mod values_index;
 #[cfg(test)]
 mod index_test;
-#[cfg(test)]
-mod values_index_test;
 mod schema;
 mod storage;
 #[cfg(test)]
@@ -44,7 +41,7 @@ fn set_with_index(
     class_hash: starknet::ClassHash, table: felt252, key: felt252, offset: u8, value: Span<felt252>, layout: Span<u8>
 ) {
     set(class_hash, table, key, offset, value, layout);
-    index::create(0, table, key);
+    index::create(0, table, key, 0);
 }
 
 fn del(class_hash: starknet::ClassHash, table: felt252, key: felt252) {
@@ -64,13 +61,13 @@ fn scan(
             clause.key.serialize(ref serialized);
             let index = poseidon_hash_span(serialized.span());
 
-            let all_ids = values_index::get(0, index, clause.value);
+            let all_ids = index::get(0, index, clause.value);
             (all_ids, get_by_ids(class_hash, index, all_ids, values_length, values_layout))
         },
 
         // If no `where` clause is defined, we return all values.
         Option::None(_) => {
-            let all_ids = index::get(0, model);
+            let all_ids = index::get(0, model, 0);
             (all_ids, get_by_ids(class_hash, model, all_ids, values_length, values_layout))
         }
     }
