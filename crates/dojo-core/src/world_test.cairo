@@ -6,6 +6,7 @@ use option::OptionTrait;
 use starknet::class_hash::Felt252TryIntoClassHash;
 use starknet::{contract_address_const, ContractAddress, ClassHash, get_caller_address};
 use starknet::syscalls::deploy_syscall;
+use debug::PrintTrait;
 
 use dojo::executor::executor;
 use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait, world};
@@ -180,18 +181,22 @@ fn test_entities() {
         contract_address: deploy_with_world_address(bar::TEST_CLASS_HASH, world)
     };
 
-    let alice = starknet::contract_address_const::<0x1337>();
+    let alice = starknet::contract_address_const::<0x1333>();
     starknet::testing::set_contract_address(alice);
     bar_contract.set_foo(1337, 1337);
 
     let mut keys = ArrayTrait::new();
     keys.append(0);
 
-    let query_key = Option::Some('caller');
+    let query_key = Option::Some(0);
     let query_values = array![1337].span();
     let layout = array![252].span();
-    let (keys, values) = world.entities('Foo', Option::None(()), Option::None(()), query_values, 2, layout);
-    assert(keys.len() == 1, 'No keys found for any!');
+    let (keys, values) = world.entities('Foo', Option::None(()), Option::Some(0), query_values, 2, layout);
+    let index = poseidon::poseidon_hash_span(array!['Foo', 0].span());
+    // index.print();
+    // dojo::database::index::create(0, 0x2b9719bcb4ccc0449e964644e4afaa7794952b0a5f19a5371d10ed58d9f38fd, 0, 0);
+    assert(dojo::database::index::get(0, 0x2b9719bcb4ccc0449e964644e4afaa7794952b0a5f19a5371d10ed58d9f38fd, 0).len() == 1, 'No keys found for any!');
+    ///// REPR OUTSIDE 
 
     // query_keys.append(0x1337);
     // let (keys, values) = world.entities('Foo', 42, query_keys.span(), 2, layout);

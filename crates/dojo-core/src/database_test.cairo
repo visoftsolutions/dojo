@@ -125,8 +125,8 @@ fn test_database_scan() {
     let layout = array![251, 251].span();
 
     let class_hash: starknet::ClassHash = executor::TEST_CLASS_HASH.try_into().unwrap();
-    set_with_index(class_hash, 'table', 'even', 0, even, layout);
-    set_with_index(class_hash, 'table', 'odd', 0, odd, layout);
+    set_with_index(class_hash, 'table', 'even', array![1].span(), 0, even, layout);
+    set_with_index(class_hash, 'table', 'odd', array![1].span(), 0, odd, layout);
 
     let (keys, values) = scan(class_hash, 'table', Option::None(()), 2, layout);
     assert(keys.len() == 2, 'Wrong number of keys!');

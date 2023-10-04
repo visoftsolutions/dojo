@@ -322,7 +322,7 @@ mod world {
 
             let key = poseidon::poseidon_hash_span(keys);
             let model_class_hash = self.models.read(model);
-            database::set_with_index(model_class_hash, model, key, offset, values, layout);
+            database::set_with_index(model_class_hash, model, key, keys, offset, values, layout);
 
             EventEmitter::emit(ref self, StoreSetRecord { table: model, keys, offset, values });
         }

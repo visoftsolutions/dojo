@@ -3,6 +3,7 @@ use traits::{Into, TryInto};
 use serde::Serde;
 use hash::LegacyHash;
 use poseidon::poseidon_hash_span;
+use debug::PrintTrait;
 
 mod index;
 #[cfg(test)]
@@ -38,10 +39,33 @@ fn set(
 }
 
 fn set_with_index( 
-    class_hash: starknet::ClassHash, table: felt252, key: felt252, offset: u8, value: Span<felt252>, layout: Span<u8>
+    class_hash: starknet::ClassHash,
+    table: felt252,
+    key: felt252,
+    keys: Span<felt252>,
+    offset: u8,
+    value: Span<felt252>,
+    layout: Span<u8>
 ) {
     set(class_hash, table, key, offset, value, layout);
-    index::create(0, table, key, 0);
+    index::create(0, table, key, 0); // create a record in index of all records
+    dojo::database::index::create(0, 0x2b9719bcb4ccc0449e964644e4afaa7794952b0a5f19a5371d10ed58d9f38fd, 0, 0);
+    assert(dojo::database::index::get(0, 0x2b9719bcb4ccc0449e964644e4afaa7794952b0a5f19a5371d10ed58d9f38fd, 0).len() == 1, 'validate inside');
+    assert((*keys.at(0)) == 0x1333, 'not in tested fn');
+    'here'.print();
+
+    ///// REPR INSIDE 
+
+    let mut idx = 0;
+    loop {
+        if idx == keys.len() {
+            break;
+        }
+        let table = poseidon_hash_span(array![table, idx.into()].span());
+        index::create(0, table, key, 0); // create a record for each of the keys
+        
+        idx += 1;
+    };
 }
 
 fn del(class_hash: starknet::ClassHash, table: felt252, key: felt252) {
