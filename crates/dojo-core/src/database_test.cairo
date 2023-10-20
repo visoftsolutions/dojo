@@ -4,6 +4,7 @@ use option::OptionTrait;
 use serde::Serde;
 use array::SpanTrait;
 use traits::{Into, TryInto};
+use debug::PrintTrait;
 
 use starknet::syscalls::deploy_syscall;
 use starknet::class_hash::{Felt252TryIntoClassHash, ClassHash};
@@ -126,4 +127,48 @@ fn test_database_scan() {
     assert(*keys.at(0) == 'even', 'Wrong key at index 0!');
     assert(*(*values.at(0)).at(0) == 2, 'Wrong value at index 0!');
     assert(*(*values.at(0)).at(1) == 4, 'Wrong value at index 1!');
+}
+
+
+fn start() -> u128 {
+    let g = testing::get_available_gas();
+    gas::withdraw_gas().unwrap();
+    g
+}
+
+#[test]
+#[available_gas(1000000000)]
+fn anomaly() {
+
+    // saving used gas returned from function
+    let gas_from_function = start();
+    gas_from_function.print();
+
+    // saving used gas locally
+    // let local_gas = testing::get_available_gas();
+    // gas::withdraw_gas().unwrap();
+    // local_gas.print();
+
+    // Not important code, using gas
+    let a: felt252 = 2;
+    let mut serialized = ArrayTrait::new();
+    serde::Serde::serialize(@a, ref serialized);
+    let serialized = array::ArrayTrait::span(@serialized);
+    // end of not important code
+
+    // Saving gas after
+    let gas_after = testing::get_available_gas();
+    gas::withdraw_gas().unwrap();
+
+    gas_after.print();
+
+    // used gas for both cases
+    // (local_gas - gas_after).print();
+    (gas_from_function - gas_after).print();
+
+    // When using `local_gas`
+    // [DEBUG]                                 (raw: 0x992 
+
+    // When using `gas_from_function`
+    // [DEBUG]                                 (raw: 0x0
 }
