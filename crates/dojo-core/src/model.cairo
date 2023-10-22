@@ -25,7 +25,6 @@ struct Outer {
 
 #[derive(Model, Copy, Drop, Serde)]
 struct Inner {
-    #[key]
     key: felt252,
     value: felt252,
 }

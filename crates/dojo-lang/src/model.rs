@@ -22,7 +22,7 @@ pub fn handle_model_struct(
     aux_data: &mut DojoAuxData,
     struct_ast: ItemStruct,
 ) -> (RewriteNode, Vec<PluginDiagnostic>) {
-    let mut diagnostics = vec![];
+    let diagnostics = vec![];
 
     let elements = struct_ast.members(db).elements(db);
     let members: &Vec<_> = &elements
@@ -35,14 +35,6 @@ pub fn handle_model_struct(
         .collect::<_>();
 
     let keys: Vec<_> = members.iter().filter(|m| m.key).collect::<_>();
-
-    if keys.is_empty() {
-        diagnostics.push(PluginDiagnostic {
-            message: "Model must define atleast one #[key] attribute".into(),
-            stable_ptr: struct_ast.name(db).stable_ptr().untyped(),
-        });
-    }
-
     let serialize_member = |m: &Member, include_key: bool| {
         if m.key && !include_key {
             return None;
