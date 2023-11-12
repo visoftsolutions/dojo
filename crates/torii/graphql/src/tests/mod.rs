@@ -275,14 +275,14 @@ pub async fn spinup_types_test() -> Result<SqlitePool> {
     let ws = ops::read_workspace(config.manifest_path(), &config)
         .unwrap_or_else(|op| panic!("Error building workspace: {op:?}"));
 
-    execute_strategy(&ws, &migration, &account, None).await.unwrap();
+    let (_, addresses) = execute_strategy(&ws, &migration, &account, None).await.unwrap();
 
     //  Execute `create` and insert 10 records into storage
     let records_contract = "0x5cb354584b1b49308e6dd2540dcde5c408a8ee282ce74949438d7da7f266a92";
     let InvokeTransactionResult { transaction_hash } = account
         .execute(vec![Call {
             calldata: vec![FieldElement::from_str("0xa").unwrap()],
-            to: FieldElement::from_str(records_contract).unwrap(),
+            to: addresses[0],
             selector: selector!("create"),
         }])
         .send()

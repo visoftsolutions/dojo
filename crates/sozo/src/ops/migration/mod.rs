@@ -138,7 +138,7 @@ where
         .map_err(|e| anyhow!(e))
         .with_context(|| "Problem trying to migrate.")?;
 
-    if let Some(block_height) = block_height {
+    if let (Some(block_height), _) = block_height {
         ui.print(format!(
             "\n🎉 Successfully migrated World on block #{} at address {}",
             block_height,
@@ -278,7 +278,7 @@ pub async fn execute_strategy<P, S>(
     strategy: &MigrationStrategy,
     migrator: &SingleOwnerAccount<P, S>,
     txn_config: Option<TransactionOptions>,
-) -> Result<Option<u64>>
+) -> Result<(Option<u64>, Vec<FieldElement>)>
 where
     P: Provider + Sync + Send + 'static,
     S: Signer + Sync + Send + 'static,
@@ -358,12 +358,16 @@ where
     };
 
     register_models(strategy, migrator, ui, txn_config.clone()).await?;
-    deploy_contracts(strategy, migrator, ui, txn_config).await?;
+    let deploy_outputs = deploy_contracts(strategy, migrator, ui, txn_config).await?;
+    let addresses = deploy_outputs
+        .into_iter()
+        .filter_map(|d| d.and_then(|d| Some(d.contract_address)))
+        .collect();
 
     // This gets current block numder if helpful
     // let block_height = migrator.provider().block_number().await.ok();
 
-    Ok(None)
+    Ok((None, addresses))
 }
 
 enum ContractDeploymentOutput {
